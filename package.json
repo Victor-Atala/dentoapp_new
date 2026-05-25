@@ -1,0 +1,15 @@
+{
+  "name": "dentoapp",
+  "version": "1.0.0",
+  "description": "Clínica Dental - Proyecto de clase",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^4.18.2",
+    "nodemailer": "^8.0.7",
+    "sqlite3": "^5.1.7"
+  }
+}

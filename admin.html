@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dental Care - Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="area"><ul class="circles"><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li></ul></div>
+    <div id="navbar-placeholder"></div>
+
+    <main class="container">
+        <!-- Stats rápidas -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="custom-card text-center py-4">
+                    <div class="service-icon-wrap mx-auto mb-3"><i class="fas fa-users"></i></div>
+                    <div class="stat-number" id="stat-total">-</div>
+                    <p class="text-muted small mt-1">Usuarios Registrados</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="custom-card text-center py-4">
+                    <div class="service-icon-wrap mx-auto mb-3"><i class="fas fa-user-shield"></i></div>
+                    <div class="stat-number" id="stat-admin">-</div>
+                    <p class="text-muted small mt-1">Administradores</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="custom-card text-center py-4">
+                    <div class="service-icon-wrap mx-auto mb-3"><i class="fas fa-user-check"></i></div>
+                    <div class="stat-number" id="stat-users">-</div>
+                    <p class="text-muted small mt-1">Pacientes</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de usuarios -->
+        <div class="custom-card">
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                <h4 class="mb-0"><i class="fas fa-database text-primary me-2"></i>Usuarios en la Base de Datos</h4>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-success rounded-pill" data-bs-toggle="modal" data-bs-target="#createUserModal">
+                        <i class="fas fa-plus me-1"></i>Nuevo Usuario
+                    </button>
+                    <button onclick="cargarUsuarios()" class="btn btn-sm btn-primary rounded-pill">
+                        <i class="fas fa-sync-alt me-1"></i>Actualizar
+                    </button>
+                    <button onclick="logout()" class="btn btn-sm btn-outline-danger rounded-pill">
+                        <i class="fas fa-sign-out-alt me-1"></i>Salir
+                    </button>
+                </div>
+            </div>
+
+            <div id="tabla-msg" class="mb-3" style="display:none;"></div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>#ID</th>
+                            <th>Nombre</th>
+                            <th>Correo</th>
+                            <th>Contraseña <small class="text-danger fw-normal">(solo educativo)</small></th>
+                            <th>Rol</th>
+                            <th>Registro</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usuarios-tbody">
+                        <tr><td colspan="7" class="text-center text-muted py-4">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Nuevo Usuario -->
+    <div class="modal fade" id="createUserModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Registrar Nuevo Usuario</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createUserForm" onsubmit="crearUsuario(event)">
+                        <div class="mb-3">
+                            <label class="form-label">Nombre Completo</label>
+                            <input type="text" id="newNombre" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Correo Electrónico</label>
+                            <input type="email" id="newEmail" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Contraseña</label>
+                            <input type="text" id="newPassword" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Rol</label>
+                            <select id="newRol" class="form-select" required>
+                                <option value="usuario">Paciente</option>
+                                <option value="doctor">Odontólogo</option>
+                                <option value="admin">Administrador</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">Crear Usuario</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/navbar.js"></script>
+    <script>
+        const admin = checkSession(['admin']);
+        if (!admin) { /* Redirigido */ }
+
+        async function cargarUsuarios() {
+            try {
+                const res  = await secureFetch('/api/usuarios');
+                const data = await res.json();
+                renderTabla(data);
+            } catch(err) {
+                document.getElementById('usuarios-tbody').innerHTML =
+                    '<tr><td colspan="7" class="text-center text-danger">Error al conectar con el servidor</td></tr>';
+            }
+        }
+
+        function renderTabla(usuarios) {
+            document.getElementById('stat-total').textContent = usuarios.length;
+            document.getElementById('stat-admin').textContent = usuarios.filter(u => u.rol === 'admin').length;
+            document.getElementById('stat-users').textContent = usuarios.filter(u => u.rol !== 'admin').length;
+
+            const tbody = document.getElementById('usuarios-tbody');
+            if (!usuarios.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No hay usuarios registrados</td></tr>';
+                return;
+            }
+            tbody.innerHTML = usuarios.map(u => {
+                const fecha = new Date(u.fechaRegistro).toLocaleDateString('es-MX');
+                const rolBadge = u.rol === 'admin'
+                    ? '<span class="badge bg-primary">Admin</span>'
+                    : '<span class="badge bg-success">Paciente</span>';
+                return '<tr>' +
+                    '<td><strong>#' + u.id + '</strong></td>' +
+                    '<td>' + u.nombre + '</td>' +
+                    '<td><small>' + u.email + '</small></td>' +
+                    '<td><code class="text-danger bg-danger bg-opacity-10 px-2 py-1 rounded">' + u.password + '</code></td>' +
+                    '<td>' + rolBadge + '</td>' +
+                    '<td><small class="text-muted">' + fecha + '</small></td>' +
+                    '<td>' +
+                    (u.rol !== 'admin' ? '<button onclick="eliminarUsuario(' + u.id + ')" class="btn btn-sm btn-outline-danger rounded-pill"><i class="fas fa-trash me-1"></i>Eliminar</button>' : '<span class="text-muted small">—</span>') +
+                    '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        async function eliminarUsuario(id) {
+            if (!confirm('Eliminar este usuario?')) return;
+            try {
+                await secureFetch('/api/usuarios/' + id, { method: 'DELETE' });
+                cargarUsuarios();
+            } catch(err) { alert('Error al eliminar'); }
+        }
+
+        async function crearUsuario(e) {
+            e.preventDefault();
+            const nombre = document.getElementById('newNombre').value;
+            const email = document.getElementById('newEmail').value;
+            const password = document.getElementById('newPassword').value;
+            const rol = document.getElementById('newRol').value;
+
+            try {
+                const res = await secureFetch('/api/registro', {
+                    method: 'POST',
+                    body: JSON.stringify({ nombre, email, password, rol })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert('Usuario creado exitosamente');
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('createUserModal'));
+                    modal.hide();
+                    document.getElementById('createUserForm').reset();
+                    cargarUsuarios();
+                } else {
+                    alert(data.error);
+                }
+            } catch (error) {
+                alert('Error de conexión');
+            }
+        }
+
+        // Cargar al inicio
+        cargarUsuarios();
+    </script>
+</body>
+</html>
