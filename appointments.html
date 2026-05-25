@@ -75,6 +75,10 @@
     <script src="js/main.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Requerir inicio de sesión obligatorio al entrar a la página
+            const user = checkSession(['usuario', 'doctor', 'admin']);
+            if (!user) return; // Si no hay usuario, checkSession redirige a auth.html
+
             // Configurar fecha mínima a hoy
             const dateInput = document.getElementById('date');
             const today = new Date().toISOString().split('T')[0];
