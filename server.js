@@ -7,6 +7,10 @@ const express = require('express');
 const { Pool } = require('pg');
 const path = require('path');
 const nodemailer = require('nodemailer');
+const dns = require('dns');
+
+// Forzar el uso de IPv4 para evitar errores de conexión (ENETUNREACH con IPv6)
+dns.setDefaultResultOrder('ipv4first');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
